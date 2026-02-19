@@ -220,13 +220,12 @@ export const FacialLoginComponent = () => {
         );
         
         // Extraer embedding facial
-        const faceDescriptor = Array.from(fullFaceDescription.descriptor);
-        setFaceEmbedding(faceDescriptor);
-        
-        // Intentar autenticar automáticamente
-        if (!authenticating && !recognizedUser) {
-          authenticateWithFace(faceDescriptor);
-        }
+       const faceDescriptor = Array.from(fullFaceDescription.descriptor) as number[];
+setFaceEmbedding(faceDescriptor);
+
+if (!authenticating && !recognizedUser) {
+  authenticateWithFace(faceDescriptor);
+}
       }
     } catch (err) {
       const error = err as Error;

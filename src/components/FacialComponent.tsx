@@ -398,11 +398,11 @@ export const FacialDetectionComponent = () => {
           let maxValue = 0;
           
           Object.entries(expressions).forEach(([emotion, value]) => {
-            if (value > maxValue) {
-              maxValue = value as number;
-              dominantEmotion = emotion;
-            }
-          });
+  if ((value as number) > maxValue) {
+    maxValue = value as number;
+    dominantEmotion = emotion;
+  }
+});
           
           // Mapear nombres de emociones al español
           const emotionMap: Record<string, string> = {
@@ -619,7 +619,7 @@ export const FacialDetectionComponent = () => {
       
       if (fullFaceDescription) {
         // El descriptor es el embedding facial (vector de 128 dimensiones)
-        const faceDescriptor = Array.from(fullFaceDescription.descriptor);
+        const faceDescriptor = Array.from(fullFaceDescription.descriptor) as number[];
         setFaceEmbedding(faceDescriptor);
         
         // Actualizar el estado del formulario con la URL de la imagen y el embedding
