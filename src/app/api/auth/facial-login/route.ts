@@ -35,13 +35,8 @@ export async function POST(request: NextRequest) {
       );
     }
     
-    // ✅ Cambio aquí: NOT en lugar de embedding: { not: null }
-    const personas = await prisma.persona.findMany({
-      where: {
-        NOT: {
-          embedding: null,
-        },
-      },
+    // ✅ Traer todas las personas y filtrar en código
+    const todasPersonas = await prisma.persona.findMany({
       select: {
         id: true,
         nombre: true,
@@ -50,6 +45,9 @@ export async function POST(request: NextRequest) {
         embedding: true,
       },
     });
+
+    // Filtrar solo las que tienen embedding
+const personas = todasPersonas.filter((p: typeof todasPersonas[0]) => p.embedding !== null);
     
     if (personas.length === 0) {
       return NextResponse.json(
