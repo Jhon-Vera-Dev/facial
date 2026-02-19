@@ -3,25 +3,12 @@
 
 import { useState } from "react";
 import { signIn } from "next-auth/react";
-import dynamic from "next/dynamic";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-
-// ✅ Carga dinámica sin SSR para evitar el error de localStorage
-const FacialLoginComponent = dynamic(
-  () => import("@/components/FacialLoginComponent").then(mod => ({ default: mod.FacialLoginComponent })),
-  { 
-    ssr: false,
-    loading: () => (
-      <div className="flex justify-center items-center py-8">
-        <p className="text-gray-500">Cargando cámara...</p>
-      </div>
-    )
-  }
-);
+import { FacialLoginComponent } from "@/components/FacialLoginComponent";
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
@@ -41,6 +28,7 @@ export default function LoginPage() {
     setError("");
     
     try {
+      // Primero buscar el usuario por correo y dni
       const res = await fetch("/api/auth/verify-credentials", {
         method: "POST",
         headers: {
@@ -52,6 +40,7 @@ export default function LoginPage() {
       const data = await res.json();
       
       if (data.success && data.user) {
+        // Si se encuentra el usuario, iniciar sesión con NextAuth
         const result = await signIn("credentials", {
           id: data.user.id,
           redirect: true,

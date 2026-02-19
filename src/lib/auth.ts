@@ -1,3 +1,5 @@
+// app/api/auth/[...nextauth]/route.ts
+import NextAuth from "next-auth/next";
 import CredentialsProvider from "next-auth/providers/credentials";
 import { PrismaClient } from "@prisma/client";
 import { NextAuthOptions } from "next-auth";
@@ -12,18 +14,26 @@ export const authOptions: NextAuthOptions = {
         id: { label: "ID", type: "text" },
       },
       async authorize(credentials) {
-        if (!credentials?.id) return null;
+        if (!credentials?.id) {
+          return null;
+        }
+
         try {
+          // Buscar usuario por ID
           const user = await prisma.persona.findUnique({
-            where: { id: parseInt(credentials.id) },
+            where: {
+              id: parseInt(credentials.id),
+            },
             select: {
               id: true,
               nombre: true,
               apellido: true,
               correo: true,
               fotoPerfilUrl: true,
+              // No incluimos el embedding por seguridad
             },
           });
+
           if (user) {
             return {
               id: String(user.id),
@@ -40,7 +50,9 @@ export const authOptions: NextAuthOptions = {
       },
     }),
   ],
-  session: { strategy: "jwt" },
+  session: {
+    strategy: "jwt",
+  },
   pages: {
     signIn: "/login",
     signOut: "/logout",
@@ -48,7 +60,9 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user }) {
-      if (user) token.id = user.id;
+      if (user) {
+        token.id = user.id;
+      }
       return token;
     },
     async session({ session, token }) {
@@ -59,3 +73,6 @@ export const authOptions: NextAuthOptions = {
     },
   },
 };
+
+const handler = NextAuth(authOptions);
+export { handler as GET, handler as POST };

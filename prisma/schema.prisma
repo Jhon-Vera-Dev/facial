@@ -13,18 +13,21 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+
 model Persona {
-  id              Int       @id @default(autoincrement())
-  nombre          String
-  apellido        String
-  dni             String    @unique
-  correo          String    @unique
-  telefono        String?
+  id            Int     @id @default(autoincrement())
+  nombre        String
+  apellido      String
+  dni           String  @unique
+  correo        String  @unique
+  telefono      String?
   // Foto facial capturada
-  fotoPerfilUrl   String?   // URL de la imagen si la almacenas como imagen
+  fotoPerfilUrl String  @db.LongText //ruta de la foto
 
+  // URL de la imagen si la almacenas como imagen
+  emocion       String?
   // Vector de embedding facial (128 dimensiones)
-  embedding       Json?     // Se guarda como JSON, ej: [0.123, -0.875, ..., 0.421]
-
-  creadoEn        DateTime  @default(now())
+  embedding     Json? // Se guarda como JSON, ej: [0.123, -0.875, ..., 0.421]
+  fecharegistro DateTime @default(now())
+  creadoEn      DateTime @default(now())
 }

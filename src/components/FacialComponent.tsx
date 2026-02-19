@@ -21,6 +21,7 @@ interface Persona {
   fotoPerfilUrl?: string;
   embedding?: number[];
   creadoEn?: Date;
+  emocion?: string;
 }
 
 export const FacialDetectionComponent = () => {
@@ -398,11 +399,11 @@ export const FacialDetectionComponent = () => {
           let maxValue = 0;
           
           Object.entries(expressions).forEach(([emotion, value]) => {
-  if ((value as number) > maxValue) {
+             if ((value as number) > maxValue) {
     maxValue = value as number;
     dominantEmotion = emotion;
   }
-});
+          });
           
           // Mapear nombres de emociones al español
           const emotionMap: Record<string, string> = {
@@ -623,12 +624,13 @@ export const FacialDetectionComponent = () => {
         setFaceEmbedding(faceDescriptor);
         
         // Actualizar el estado del formulario con la URL de la imagen y el embedding
-        setFormData(prev => ({
+         setFormData(prev => ({
           ...prev,
           fotoPerfilUrl: imageDataUrl,
           embedding: faceDescriptor
         }));
-        
+
+        console.log(formData);
         addLog("✅ Embedding facial generado con éxito");
       } else {
         addLog("❌ No se pudo generar el embedding facial");
@@ -676,6 +678,7 @@ export const FacialDetectionComponent = () => {
           ...formData,
           fotoPerfilUrl: capturedImage,
           embedding: faceEmbedding,
+          emocion:emotion
         }),
       });
       
@@ -685,7 +688,7 @@ export const FacialDetectionComponent = () => {
       }
       
       const data = await response.json();
-      
+      console.log(data)
       // Mostrar éxito
       setRegistrationSuccess(true);
       addLog("✅ Persona registrada correctamente");
@@ -714,6 +717,7 @@ export const FacialDetectionComponent = () => {
       dni: '',
       correo: '',
       telefono: '',
+      
     });
     setFormErrors({
       nombre: '',

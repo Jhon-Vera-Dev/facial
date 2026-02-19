@@ -24,15 +24,15 @@ export const FacialLoginComponent = () => {
   const [recognizedUser, setRecognizedUser] = useState<any>(null);
   const [faceEmbedding, setFaceEmbedding] = useState<number[] | null>(null);
   const detectionInterval = useRef<NodeJS.Timeout | null>(null);
-  
+
   // Acceder a la sesión actual
   const { data: session } = useSession();
-  
+
   const addLog = (message: string) => {
     console.log(message);
     setLogs(prev => [message, ...prev].slice(0, 10));
   };
-  
+
   // Cargar face-api.js manualmente
   useEffect(() => {
     const loadScript = () => {
@@ -43,27 +43,27 @@ export const FacialLoginComponent = () => {
           resolve();
           return;
         }
-        
+
         const script = document.createElement('script');
         script.src = 'https://cdn.jsdelivr.net/npm/face-api.js@0.22.2/dist/face-api.min.js';
         script.async = true;
         script.defer = true;
-        
+
         script.onload = () => {
           setIsScriptLoaded(true);
           addLog("✅ Script de face-api.js cargado");
           resolve();
         };
-        
+
         script.onerror = (error) => {
           setError("Error al cargar face-api.js");
           reject(error);
         };
-        
+
         document.head.appendChild(script);
       });
     };
-    
+
     loadScript()
       .then(() => {
         const checkFaceApi = setInterval(() => {
@@ -73,30 +73,30 @@ export const FacialLoginComponent = () => {
             addLog("✅ face-api.js disponible");
           }
         }, 100);
-        
+
         return () => clearInterval(checkFaceApi);
       })
       .catch(err => {
         addLog(`❌ Error cargando script: ${err}`);
       });
   }, []);
-  
+
   // Cargar modelos cuando face-api esté disponible
   useEffect(() => {
     if (!faceapi) return;
-    
+
     const loadModels = async () => {
       try {
         addLog("⏳ Cargando modelos...");
-        
+
         // Cargar los modelos necesarios
         await faceapi.nets.ssdMobilenetv1.loadFromUri('/models');
         await faceapi.nets.faceLandmark68Net.loadFromUri('/models');
         await faceapi.nets.faceRecognitionNet.loadFromUri('/models');
-        
+
         setIsModelLoaded(true);
         addLog("🎉 Modelos cargados");
-        
+
         // Iniciar cámara automáticamente
         startCamera();
       } catch (err) {
@@ -105,10 +105,10 @@ export const FacialLoginComponent = () => {
         addLog(`❌ Error: ${error.message}`);
       }
     };
-    
+
     loadModels();
   }, [faceapi]);
-  
+
   // Limpiar recursos al desmontar
   useEffect(() => {
     return () => {
@@ -119,12 +119,12 @@ export const FacialLoginComponent = () => {
       stopCamera();
     };
   }, []);
-  
+
   // Iniciar cámara
   const startCamera = async () => {
     try {
       addLog("📷 Iniciando cámara...");
-      
+
       const stream = await navigator.mediaDevices.getUserMedia({
         video: {
           width: { ideal: 640 },
@@ -132,22 +132,22 @@ export const FacialLoginComponent = () => {
           facingMode: 'user'
         }
       });
-      
+
       if (videoRef.current) {
         videoRef.current.srcObject = stream;
-        
+
         videoRef.current.onloadedmetadata = () => {
           if (canvasRef.current && videoRef.current) {
             canvasRef.current.width = videoRef.current.videoWidth || 640;
             canvasRef.current.height = videoRef.current.videoHeight || 480;
           }
         };
-        
+
         videoRef.current.onplay = () => {
           setCameraActive(true);
           addLog("▶️ Cámara activa");
         };
-        
+
         try {
           await videoRef.current.play();
         } catch (e) {
@@ -160,72 +160,71 @@ export const FacialLoginComponent = () => {
       setError(`Error accediendo a la cámara: ${error.message}`);
     }
   };
-  
+
   // Detener cámara
   const stopCamera = () => {
     if (videoRef.current && videoRef.current.srcObject) {
       stopDetection();
-      
+
       const stream = videoRef.current.srcObject as MediaStream;
       stream.getTracks().forEach(track => track.stop());
       videoRef.current.srcObject = null;
-      
+
       setCameraActive(false);
       addLog("🛑 Cámara detenida");
     }
   };
-  
+
   // Detectar rostros
   const detectFaces = async () => {
     if (!videoRef.current || !canvasRef.current || !faceapi) return;
-    
+
     try {
       const video = videoRef.current;
       const canvas = canvasRef.current;
-      
+
       if (video.paused || video.ended) return;
-      
+
       const ctx = canvas.getContext('2d');
       if (!ctx) return;
-      
+
       const displaySize = { width: video.videoWidth, height: video.videoHeight };
       faceapi.matchDimensions(canvas, displaySize);
       ctx.clearRect(0, 0, canvas.width, canvas.height);
-      
+
       // Dibujar el video en canvas
       ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-      
+
       // Detectar rostro y obtener descriptor facial
       const fullFaceDescription = await faceapi
         .detectSingleFace(video)
         .withFaceLandmarks()
         .withFaceDescriptor();
-      
+
       if (fullFaceDescription) {
         // Dibujar el recuadro del rostro
         const resizedDetection = faceapi.resizeResults(fullFaceDescription, displaySize);
         const box = resizedDetection.detection.box;
-        
+
         ctx.lineWidth = 3;
         ctx.strokeStyle = 'green';
         ctx.strokeRect(box.x, box.y, box.width, box.height);
-        
+
         // Mostrar porcentaje de confianza
         ctx.fillStyle = 'green';
         ctx.font = 'bold 16px Arial';
         ctx.fillText(
           `${(resizedDetection.detection.score * 100).toFixed(0)}%`,
-          box.x, 
+          box.x,
           box.y - 5
         );
-        
-        // Extraer embedding facial
-       const faceDescriptor = Array.from(fullFaceDescription.descriptor) as number[];
-setFaceEmbedding(faceDescriptor);
 
-if (!authenticating && !recognizedUser) {
-  authenticateWithFace(faceDescriptor);
-}
+     const faceDescriptor = Array.from(fullFaceDescription.descriptor) as number[];
+        setFaceEmbedding(faceDescriptor);
+
+        if (!authenticating && !recognizedUser) {
+          authenticateWithFace(faceDescriptor);
+        }
       }
     } catch (err) {
       const error = err as Error;
@@ -233,38 +232,38 @@ if (!authenticating && !recognizedUser) {
       addLog(`❌ Error: ${error.message}`);
     }
   };
-  
+
   // Iniciar detección
   const startDetection = () => {
     if (!isModelLoaded || !cameraActive || !faceapi) {
       setError("Los modelos deben estar cargados y la cámara activa para iniciar la detección");
       return;
     }
-    
+
     setIsDetecting(true);
     addLog("🔍 Iniciando detección facial");
-    
+
     if (detectionInterval.current) {
       clearInterval(detectionInterval.current);
     }
-    
+
     // Ejecutar detección inicial
     detectFaces();
-    
+
     // Configurar intervalo para detección continua
     detectionInterval.current = setInterval(detectFaces, 500);
   };
-  
+
   // Detener detección
   const stopDetection = () => {
     if (detectionInterval.current) {
       clearInterval(detectionInterval.current);
       detectionInterval.current = null;
     }
-    
+
     setIsDetecting(false);
     addLog("🛑 Detección detenida");
-    
+
     // Limpiar canvas
     if (canvasRef.current) {
       const ctx = canvasRef.current.getContext('2d');
@@ -273,14 +272,15 @@ if (!authenticating && !recognizedUser) {
       }
     }
   };
-  
+
   // Función para intentar autenticar con el rostro
   const authenticateWithFace = async (embedding: number[]) => {
     if (authenticating || recognizedUser) return;
-    
+
     setAuthenticating(true);
     addLog("🔒 Autenticando rostro...");
-    
+console.log("Embedding enviado:", embedding);
+
     try {
       const response = await fetch('/api/auth/facial-login', {
         method: 'POST',
@@ -289,25 +289,22 @@ if (!authenticating && !recognizedUser) {
         },
         body: JSON.stringify({ embedding }),
       });
-      
+
       if (!response.ok) {
         const errorData = await response.json();
         throw new Error(errorData.error || 'Error en autenticación facial');
       }
-      
+
       const data = await response.json();
-      
+
       if (data.success && data.user) {
         // Guardar usuario reconocido
         setRecognizedUser(data.user);
         addLog(`✅ Usuario reconocido: ${data.user.nombre} ${data.user.apellido}`);
-        
-        // Iniciar sesión con NextAuth
-        await signIn('credentials', {
-          id: data.user.id,
-          redirect: false
-        });
-        
+
+        localStorage.setItem("token", data.token); // o cookie si lo prefieres
+        window.location.href = "/dashboard"; // o router.push
+
         // Detener la detección una vez autenticado
         stopDetection();
       } else {
@@ -326,7 +323,7 @@ if (!authenticating && !recognizedUser) {
       }, 3000);
     }
   };
-  
+
   // Iniciar autenticación facial al hacer clic en botón
   const handleLoginClick = () => {
     if (!isDetecting) {
@@ -335,13 +332,13 @@ if (!authenticating && !recognizedUser) {
       authenticateWithFace(faceEmbedding);
     }
   };
-  
+
   // Cerrar sesión
   const handleLogout = async () => {
     await signOut();
     setRecognizedUser(null);
   };
-  
+
   return (
     <div className="mt-4">
       <Card className="w-full max-w-md mx-auto">
@@ -397,7 +394,7 @@ if (!authenticating && !recognizedUser) {
                   </div>
                 )}
               </div>
-              
+
               <div className="space-y-4">
                 <div className="flex justify-between mb-2">
                   <Badge variant={isScriptLoaded ? "default" : "outline"}>
@@ -410,14 +407,14 @@ if (!authenticating && !recognizedUser) {
                     {cameraActive ? '✅ Cámara Activa' : '❌ Cámara Inactiva'}
                   </Badge>
                 </div>
-                
+
                 <div className="flex flex-col space-y-2">
                   {recognizedUser ? (
                     <Button onClick={() => signIn('credentials', { id: recognizedUser.id })} className="w-full">
                       Continuar como {recognizedUser.nombre}
                     </Button>
                   ) : (
-                    <Button 
+                    <Button
                       onClick={handleLoginClick}
                       disabled={!isModelLoaded || !cameraActive || authenticating}
                       className="w-full"
@@ -425,18 +422,18 @@ if (!authenticating && !recognizedUser) {
                       {isDetecting ? 'Reconocer mi Rostro' : 'Iniciar Reconocimiento'}
                     </Button>
                   )}
-                  
+
                   <Button variant="outline" onClick={() => signIn()} className="w-full">
                     Iniciar Sesión con Credenciales
                   </Button>
                 </div>
-                
+
                 {error && (
                   <Alert variant="destructive">
                     <AlertDescription>{error}</AlertDescription>
                   </Alert>
                 )}
-                
+
                 <div className="bg-gray-800 text-gray-100 p-2 rounded-md h-24 overflow-y-auto text-xs">
                   <ul className="space-y-1 font-mono">
                     {logs.map((log, index) => (

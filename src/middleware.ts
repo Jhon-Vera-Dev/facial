@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server'
 import type { NextRequest } from 'next/server'
 
+
 export default function middleware(request: NextRequest) {
   // Puedes agregar lógica de registro (logging) aquí si lo deseas
   console.log(`Middleware ejecutado en: ${request.nextUrl.pathname}`)
