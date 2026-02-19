@@ -22,8 +22,7 @@ model Persona {
   correo        String  @unique
   telefono      String?
   // Foto facial capturada
-  fotoPerfilUrl String  @db.LongText //ruta de la foto
-
+fotoPerfilUrl String @db.Text
   // URL de la imagen si la almacenas como imagen
   emocion       String?
   // Vector de embedding facial (128 dimensiones)
